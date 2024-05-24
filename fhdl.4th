@@ -7,7 +7,7 @@ variable arg-param1-size
 variable arg-param2
 variable arg-param2-size
 
-create hdl-module-name 255 allot
+create hdl-module-name-string 255 allot
 
 : get_param1 arg-param1 @ arg-param1-size @ ;
 : get_param2 arg-param2 @ arg-param2-size @ ;
@@ -34,10 +34,25 @@ create hdl-module-name 255 allot
 ;
 
 : hdl-module
-    parse-name hdl-module-name $!
 ;
 
-: end-hdl-module
+: hdl-module-name
+    parse-name hdl-module-name-string $!
+;
+
+: hdl-module-sname
+    hdl-module-name-string $!
+;
+
+: end-hdl-module 
+\ write module to file 
+    s" module " fwrite
+
+    s" " hdl-module-name-string $@ s+ fwrite
+    s" (" fwrite
+    s" );" fwriteln
+
+    s" endmodule" fwriteln
 ;
 
 : fhdl ( -- )
@@ -47,17 +62,9 @@ create hdl-module-name 255 allot
     s" Input  file: " type get_param1 type cr
     s" Output file: " type get_param2 type cr
 
-
-
-    get_param1 included
-
     get_param2 fopen to fd-out
 
-    s" module " fwrite
-
-    s" " hdl-module-name $@ s+ fwriteln
-
-    s" endmodule" fwriteln
+    get_param1 included
 
     fd-out fclose
 
