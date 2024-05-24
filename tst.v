@@ -1,4 +1,4 @@
-module tst();
+module tst1(a, b, c);
 endmodule
 module tst2();
 endmodule

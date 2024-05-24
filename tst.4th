@@ -1,14 +1,8 @@
-hdl-module
-    hdl-module-name tst
+name tst1 hdl-module
+    name a hdl-port
+    name b hdl-port
+    name c hdl-port
 
-end-hdl-module
+name tst2 hdl-module
 
-hdl-module
-    hdl-module-name tst2
-
-end-hdl-module
-
-hdl-module
-    s" tst3" hdl-module-sname
-
-end-hdl-module
+s" tst3" sname  hdl-module
