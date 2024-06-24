@@ -1,3 +1,6 @@
+s" foo.v" hdl-include
+s" bar.v" hdl-include
+
 name tst1 hdl-module
     name a hdl-port
     name b hdl-port

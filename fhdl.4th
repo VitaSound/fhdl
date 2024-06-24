@@ -100,6 +100,11 @@ variable hdl-module-ports-count
 
 ;
 
+: hdl-include
+    s\" `include \"" fwrite
+    fwrite
+    s\" \"" fwriteln
+;
 
 : fhdl ( -- )
     read_args
