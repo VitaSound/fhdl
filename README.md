@@ -12,6 +12,12 @@ alias fhdl='gforth ~/fhdl/fhdl.4th -e'
 fhdl tst.4th tst.v
 ```
 
+## Features
+
+ * Create module
+ * Create port names
+ * Include .v files
+
 ## Installation
 
 For install dependecies
