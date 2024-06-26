@@ -1,6 +1,14 @@
 include ../generic_platform.4th
 
-name XilinxPlatform hdl-platform
+s" XilinxPlatform" DEVICE_PLATFORM $!
+
+[IFUNDEF] xilinx_platform
+    variable xilinx_platform \ defined
+    : XilinxSpartan6Platform s" spartan6" DEVICE_FAMILY $! ;
+    : Xilinx7SeriesPlatform  s" 7series" DEVICE_FAMILY $! ;
+    : XilinxUSPlatform s" ultrascale" DEVICE_FAMILY $! ;
+    : XilinxUSPPlatform s" ultrascale+" DEVICE_FAMILY $! ;
+[THEN]
 
 supported-toolchains
     device-toolchain spartan6 ise
@@ -12,29 +20,3 @@ supported-toolchains
     device-toolchain ultrascale+ vivado
 end-supported-toolchains
 
-\ _supported_toolchains = {
-\     "spartan6"    : ["ise"],
-\     "7series"     : ["vivado", "f4pga", "yosys+nextpnr", "openxc7"],
-\     "ultrascale"  : ["vivado"],
-\     "ultrascale+" : ["vivado"],
-\ }
-
-\ # XilinxSpartan6Platform ---------------------------------------------------------------------------
-
-\ class XilinxSpartan6Platform(XilinxPlatform):
-\     device_family = "spartan6"
-
-\ # Xilinx7SeriesPlatform ----------------------------------------------------------------------------
-
-\ class Xilinx7SeriesPlatform(XilinxPlatform):
-\     device_family = "7series"
-
-\ # XilinxUSPlatform ---------------------------------------------------------------------------------
-
-\ class XilinxUSPlatform(XilinxPlatform):
-\     device_family = "ultrascale"
-
-\ # XilinxUSPPlatform --------------------------------------------------------------------------------
-
-\ class XilinxUSPPlatform(XilinxPlatform):
-\     device_family = "ultrascale+"

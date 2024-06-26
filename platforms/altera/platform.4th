@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name AlteraPlatform hdl-platform
+s" AlteraPlatform" DEVICE_PLATFORM $!
+s" Altera" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain altera quartus

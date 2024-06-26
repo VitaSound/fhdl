@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name CologneChipPlatform hdl-platform
+s" CologneChipPlatform" DEVICE_PLATFORM $!
+s" CologneChip" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain colognechip colognechip

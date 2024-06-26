@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name SimPlatform hdl-platform
+s" SimPlatform" DEVICE_PLATFORM $!
+s" Sim" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain sim verilator

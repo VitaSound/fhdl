@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name MicrosemiPlatform hdl-platform
+s" MicrosemiPlatform" DEVICE_PLATFORM $!
+s" Microsemi" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain microsemi libero_soc_polarfire

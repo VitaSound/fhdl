@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name QuickLogicPlatform hdl-platform
+s" QuickLogicPlatform" DEVICE_PLATFORM $!
+s" QuickLogic" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain quicklogic f4pga

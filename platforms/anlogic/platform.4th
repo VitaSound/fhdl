@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name AnlogicPlatform hdl-platform
+s" AnlogicPlatform" DEVICE_PLATFORM $!
+s" Anlogic" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain anlogic td

@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name GowinPlatform hdl-platform
+s" GowinPlatform" DEVICE_PLATFORM $!
+s" Gowin" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain gowin gowin

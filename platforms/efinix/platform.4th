@@ -1,6 +1,7 @@
 include ../generic_platform.4th
 
-name EfinixPlatform hdl-platform
+s" EfinixPlatform" DEVICE_PLATFORM $!
+s" Efinix" DEVICE_FAMILY $!
 
 supported-toolchains
     device-toolchain efinix efinity
