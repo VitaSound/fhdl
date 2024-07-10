@@ -16,6 +16,62 @@ include ../platforms/lattice/platform.4th LatticeECP5Platform
 
 \ # IOs ----------------------------------------------------------------------------------------------
 
+IOs _io_v7_1
+    \ Clk
+    Signal clk25      Pin P6  IOStandard LVCMOS33
+    \ Led
+    Signal user_led_n Pin P11 IOStandard LVCMOS33
+    \ Button
+    Signal user_btn_n Pin M13 IOStandard LVCMOS33
+
+    \ Serial
+    Signal serial
+        Subsignal tx Pin P11 \ led (J19 DATA_LED-)
+        Subsignal rx Pin M13 \ btn (J19 KEY+)
+        IOStandard LVCMOS33
+
+    \ SPIFlash (W25Q32JV)
+    Signal spiflash
+        Subsignal cs_n Pin N8
+        Subsignal mosi Pin T8
+        Subsignal miso Pin T7
+        IOStandard LVCMOS33
+
+    \ SDR SDRAM (M12616161A)
+
+    \ RGMII Ethernet (B50612D)
+    Signal eth_clocks Index 0
+        Subsignal tx Pin M2
+        Subsignal rx Pin M1
+        IOStandard LVCMOS33
+
+    Signal eth Index 0
+        Subsignal rst_n   Pin P5
+        Subsignal mdio    Pin T2
+        Subsignal mdc     Pin P3
+        Subsignal rx_ctl  Pin N6
+        Subsignal rx_data s" N1 M5 N5 M6" Pins 
+        Subsignal tx_ctl  Pin M3
+        Subsignal tx_data s" L1 L3 P2 L4" Pins 
+        IOStandard LVCMOS33
+
+    Signal eth_clocks Index 1
+        Subsignal tx Pin M12
+        Subsignal rx Pin M16
+        IOStandard LVCMOS33
+
+    Signal eth Index 1
+        Subsignal rst_n   Pin "P5
+        Subsignal mdio    Pin T2
+        Subsignal mdc     Pin P3
+        Subsignal rx_ctl  Pin L15
+        Subsignal rx_data s" P13 N13 P14 M15" Pins 
+        Subsignal tx_ctl  Pin R15
+        Subsignal tx_data s" T14 R12 R13 R14" Pins
+        IOStandard LVCMOS33
+
+end-IOs
+
 \ # Documented by @derekmulcahy
 \ _io_v7_1 = [
 \     # Clk
