@@ -16,6 +16,7 @@ include ../platforms/lattice/platform.4th LatticeECP5Platform
 
 \ # IOs ----------------------------------------------------------------------------------------------
 
+
 IOs _io_v7_1
     \ Clk
     Signal clk25      Pin P6  IOStandard LVCMOS33
