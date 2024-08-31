@@ -2,7 +2,6 @@ include string.fs
 include ~/fmix/forth-packages/f/0.2.4/compat-gforth.4th
 
 
-
 variable arg-param1
 variable arg-param1-size
 variable arg-param2
@@ -31,6 +30,7 @@ variable def-module-state
 \ 1 - ports
 
 variable name-string
+variable command-string
 variable hdl-module-name-string
 variable hdl-module-ports-string
 variable hdl-module-ports-count
@@ -101,10 +101,23 @@ variable hdl-module-ports-count
 
 ;
 
-: hdl-include
+: hdl-include-verilog();
     s\" `include \"" fwrite
     fwrite
     s\" \"" fwriteln
+;
+
+: hdl-include-verilog(
+    parse-name name-string $!
+    s" hdl-include-verilog" command-string $!
+;
+
+: );
+    command-string $@ s" hdl-include-verilog" COMPARE 0= IF
+        s\" `include \"" fwrite
+        name-string $@ fwrite
+        s\" \"" fwriteln
+    THEN
 ;
 
 : fhdl ( -- )
