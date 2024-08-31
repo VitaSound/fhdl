@@ -1,8 +1,8 @@
 [IFUNDEF] generic_platform
 
     variable generic_platform \ defined
-    create DEVICE_PLATFORM 255 allot
-    create DEVICE_FAMILY 255 allot
+    variable DEVICE_PLATFORM
+    variable DEVICE_FAMILY
 
     : supported-toolchains ;
     : end-supported-toolchains ;

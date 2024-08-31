@@ -8,7 +8,7 @@ include ../platforms/generic_platform.4th
 
 
 create boards_buff 255 allot
-create boards_path 255 allot
+variable boards_path
 variable b_wdirid
 
 : boards_get_path

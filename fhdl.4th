@@ -30,9 +30,9 @@ variable def-module-state
 \ 0 - module name
 \ 1 - ports
 
-create name-string 255 allot
-create hdl-module-name-string 255 allot
-create hdl-module-ports-string 255 allot
+variable name-string
+variable hdl-module-name-string
+variable hdl-module-ports-string
 variable hdl-module-ports-count
 
 : module-fwrite 
