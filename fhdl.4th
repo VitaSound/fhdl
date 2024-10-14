@@ -101,23 +101,16 @@ variable hdl-module-ports-count
 
 ;
 
-: hdl-include-verilog();
+: include-verilog;
     s\" `include \"" fwrite
     fwrite
     s\" \"" fwriteln
 ;
 
-: hdl-include-verilog(
-    parse-name name-string $!
-    s" hdl-include-verilog" command-string $!
-;
-
-: );
-    command-string $@ s" hdl-include-verilog" COMPARE 0= IF
-        s\" `include \"" fwrite
-        name-string $@ fwrite
-        s\" \"" fwriteln
-    THEN
+: include-verilog
+    s\" `include \"" fwrite
+    parse-name fwrite
+    s\" \"" fwriteln
 ;
 
 : fhdl ( -- )

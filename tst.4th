@@ -1,12 +1,8 @@
-include ./boards/ebaz4205.4th
 
-s" Device platform: " type DEVICE_PLATFORM $@ type cr
-s" Device family: " type DEVICE_FAMILY $@ type cr
+s" foo.v" include-verilog;
+s" bar.v" include-verilog;
 
-s" foo.v" hdl-include-verilog();
-s" bar.v" hdl-include-verilog();
-
-hdl-include-verilog( baz.v );
+include-verilog bazz.v
 
 name tst1 hdl-module
     name a hdl-port

@@ -1,6 +1,6 @@
 `include "foo.v"
 `include "bar.v"
-`include "baz.v"
+`include "bazz.v"
 module tst1(a, b, c);
 endmodule
 module tst2();
