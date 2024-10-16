@@ -53,3 +53,8 @@ For install dependecies
 ```forth
    fmix packages.get
 ```
+
+fpath path+ ./forth-packages/ffl/ffl-0-8-0
+
+include ffl/config.fs
+include ffl/frc.fs

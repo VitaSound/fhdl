@@ -1,9 +1,9 @@
-`include "foo.v"
-`include "bar.v"
-`include "bazz.v"
-module tst1(a, b, c);
+module tst1;
+a port,
+b port,
+a port,
+
 endmodule
-module tst2();
-endmodule
-module tst3();
+module tst2;
+
 endmodule

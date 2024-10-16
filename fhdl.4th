@@ -1,4 +1,7 @@
+[IFUNDEF] $tmp
 include string.fs
+[THEN]
+
 include ~/fmix/forth-packages/f/0.2.4/compat-gforth.4th
 
 
@@ -25,54 +28,58 @@ variable arg-param2-size
     close-file throw
 ;
 
-variable def-module-state
-\ 0 - module name
-\ 1 - ports
+\ variable hdl-module-name-string
 
-variable name-string
-variable command-string
-variable hdl-module-name-string
-variable hdl-module-ports-string
-variable hdl-module-ports-count
+include fhdl_structures.4th
 
-: module-fwrite 
-\ write module to file 
-    s" module " fwrite
+\ variable def-module-state
+\ \ 0 - module name
+\ \ 1 - ports
 
-    s" " hdl-module-name-string $@ s+ fwrite
-    s" (" fwrite
-    hdl-module-ports-string $@ fwrite
-    s" );" fwriteln
+\ variable name-string
+\ variable command-string
+\ variable hdl-module-name-string
+\ variable hdl-module-ports-string
+\ variable hdl-module-ports-count
 
-    s" endmodule" fwriteln
-;
+\ : module-fwrite 
+\ \ write module to file 
+\     s" module " fwrite
 
-: init-hdl-module
-    0 def-module-state !
-    s" " hdl-module-ports-string $!
-    0 hdl-module-ports-count !
-;
+\     s" " hdl-module-name-string $@ s+ fwrite
+\     s" (" fwrite
+\     hdl-module-ports-string $@ fwrite
+\     s" );" fwriteln
 
-: end-prev-hdl-module
-    def-module-state @ 0>  IF
-        module-fwrite
-    THEN
-    init-hdl-module
-;
+\     s" endmodule" fwriteln
+\ ;
 
-: end-prev-hdl-port
-    hdl-module-ports-count @ 0>  IF
-        hdl-module-ports-string $@
-        s" , " $+
-        hdl-module-ports-string $!
-    THEN
+\ : init-hdl-module
+\     0 def-module-state !
+\     s" " hdl-module-ports-string $!
+\     0 hdl-module-ports-count !
+\ ;
 
-    hdl-module-ports-string $@
-    name-string $@
-    $+
-    hdl-module-ports-string $!
-    hdl-module-ports-count @ 1 + hdl-module-ports-count ! \ inc
-;
+\ : end-prev-hdl-module
+\     def-module-state @ 0>  IF
+\         module-fwrite
+\     THEN
+\     init-hdl-module
+\ ;
+
+\ : end-prev-hdl-port
+\     hdl-module-ports-count @ 0>  IF
+\         hdl-module-ports-string $@
+\         s" , " $+
+\         hdl-module-ports-string $!
+\     THEN
+
+\     hdl-module-ports-string $@
+\     name-string $@
+\     $+
+\     hdl-module-ports-string $!
+\     hdl-module-ports-count @ 1 + hdl-module-ports-count ! \ inc
+\ ;
 
 : read_args
     next-arg drop drop \ drop -e
@@ -80,38 +87,38 @@ variable hdl-module-ports-count
     next-arg arg-param2-size ! arg-param2 !
 ;
 
-: name
-    parse-name name-string $!
-;
+\ : name
+\     parse-name name-string $!
+\ ;
 
-: sname
-    name-string $!
-;
+\ : sname
+\     name-string $!
+\ ;
 
-: hdl-module
-    end-prev-hdl-module
+\ : hdl-module
+\     end-prev-hdl-module
 
-    \ name-string -> hdl-module-name-string
-    name-string $@ hdl-module-name-string $!
-    1 def-module-state !
-;
+\     \ name-string -> hdl-module-name-string
+\     name-string $@ hdl-module-name-string $!
+\     1 def-module-state !
+\ ;
 
-: hdl-port
-    end-prev-hdl-port
+\ : hdl-port
+\     end-prev-hdl-port
 
-;
+\ ;
 
-: include-verilog;
-    s\" `include \"" fwrite
-    fwrite
-    s\" \"" fwriteln
-;
+\ : include-verilog;
+\     s\" `include \"" fwrite
+\     fwrite
+\     s\" \"" fwriteln
+\ ;
 
-: include-verilog
-    s\" `include \"" fwrite
-    parse-name fwrite
-    s\" \"" fwriteln
-;
+\ : include-verilog
+\     s\" `include \"" fwrite
+\     parse-name fwrite
+\     s\" \"" fwriteln
+\ ;
 
 : fhdl ( -- )
     read_args
@@ -122,11 +129,11 @@ variable hdl-module-ports-count
 
     get_param2 fopen to fd-out
 
-    init-hdl-module
+    \ init-hdl-module
 
     get_param1 included
 
-    end-prev-hdl-module
+    \ end-prev-hdl-module
 
     fd-out fclose
 
