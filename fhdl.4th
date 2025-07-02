@@ -3,30 +3,7 @@ include string.fs
 [THEN]
 
 include ~/fmix/forth-packages/f/0.2.4/compat-gforth.4th
-
-
-variable arg-param1
-variable arg-param1-size
-variable arg-param2
-variable arg-param2-size
-
-
-
-: get_param1 arg-param1 @ arg-param1-size @ ;
-: get_param2 arg-param2 @ arg-param2-size @ ;
-
-0 Value fd-out
-
-: fopen ( c-addr u – wfileid ) w/o create-file throw ;
-
-: fwrite fd-out write-file throw ;
-: fwriteln fd-out write-line throw ;
-
-: fclose 
-    dup
-    flush-file throw
-    close-file throw
-;
+include fhdl_utils.4th
 
 \ variable hdl-module-name-string
 

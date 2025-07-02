@@ -1,7 +1,9 @@
 module tst1;
 a port,
 b port,
-a port,
+c port,
+d port,
+f port,
 
 endmodule
 module tst2;

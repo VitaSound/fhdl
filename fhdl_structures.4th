@@ -71,7 +71,7 @@ variable current_port_name
   port-data-fwrite
 ;
 
-: port parse-name port, ;
+\ : port parse-name port, ;
 
 \ end of module declaration
 : endmodule, endmodule-fwrite ;
@@ -79,8 +79,15 @@ variable current_port_name
 \ alias 
 : endmodule endmodule, ;
 
-: input ;
-: output ;
-: inout ;
+: ,input port, ;
+: ,output port, ;
+: ,inout port, ;
+
+: input parse-name port, ;
+: output parse-name port, ;
+: inout parse-name port, ;
+
+: moduleports ;
+: endmoduleports ;
 
 [THEN]
