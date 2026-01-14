@@ -1,129 +1,61 @@
-include string.fs
-include ~/fmix/forth-packages/f/0.2.4/compat-gforth.4th
+\ fhdl.4th
+\ FHDL - Forth HDL Interpreter
 
+require fhdl.reader.4th   \ Чтение конфига package.4th
+require fhdl.builder.4th  \ Подключаем логику билдера
 
-variable arg-param1
-variable arg-param1-size
-variable arg-param2
-variable arg-param2-size
-
-
-
-: get_param1 arg-param1 @ arg-param1-size @ ;
-: get_param2 arg-param2 @ arg-param2-size @ ;
-
-0 Value fd-out
-
-: fopen ( c-addr u – wfileid ) w/o create-file throw ;
-
-: fwrite fd-out write-file throw ;
-: fwriteln fd-out write-line throw ;
-
-: fclose 
-    dup
-    flush-file throw
-    close-file throw
-;
-
-variable def-module-state
-\ 0 - module name
-\ 1 - ports
-
-create name-string 255 allot
-create hdl-module-name-string 255 allot
-create hdl-module-ports-string 255 allot
-variable hdl-module-ports-count
-
-: module-fwrite 
-\ write module to file 
-    s" module " fwrite
-
-    s" " hdl-module-name-string $@ s+ fwrite
-    s" (" fwrite
-    hdl-module-ports-string $@ fwrite
-    s" );" fwriteln
-
-    s" endmodule" fwriteln
-;
-
-: init-hdl-module
-    0 def-module-state !
-    s" " hdl-module-ports-string $!
-    0 hdl-module-ports-count !
-;
-
-: end-prev-hdl-module
-    def-module-state @ 0>  IF
-        module-fwrite
-    THEN
-    init-hdl-module
-;
-
-: end-prev-hdl-port
-    hdl-module-ports-count @ 0>  IF
-        hdl-module-ports-string $@
-        s" , " $+
-        hdl-module-ports-string $!
-    THEN
-
-    hdl-module-ports-string $@
-    name-string $@
-    $+
-    hdl-module-ports-string $!
-    hdl-module-ports-count @ 1 + hdl-module-ports-count ! \ inc
-;
+2VARIABLE cmd-arg
+2VARIABLE param-arg
 
 : read_args
-    next-arg drop drop \ drop -e
-    next-arg arg-param1-size ! arg-param1 !
-    next-arg arg-param2-size ! arg-param2 !
+    next-arg 2drop \ Пропуск имени интерпретатора/скрипта
+    next-arg cmd-arg 2!
+    next-arg param-arg 2!
 ;
 
-: name
-    parse-name name-string $!
+: fhdl.help
+    cr s" Usage: fhdl <command>" type cr
+    s" Commands:" type cr
+    s"    version      - Show version from package.4th" type cr 
+    s"    help         - Show this message" type cr cr
 ;
 
-: sname
-    name-string $!
+: fhdl.version
+    cr s" ** (fhdl) fhdl v." type 
+    \ Используем переменную, заполненную в reader.fs
+    pkg-version 2@ type 
+    cr cr
 ;
 
-: hdl-module
-    end-prev-hdl-module
-
-    \ name-string -> hdl-module-name-string
-    name-string $@ hdl-module-name-string $!
-    1 def-module-state !
-;
-
-: hdl-port
-    end-prev-hdl-port
-
-;
-
-: hdl-include
-    s\" `include \"" fwrite
-    fwrite
-    s\" \"" fwriteln
+\ Обработчик команды build
+: fhdl.build
+    \ Проверяем, есть ли параметр (имя файла)
+    param-arg 2@ nip 0= IF
+        cr s" Error: 'build' command requires a filename argument." type cr
+        s" Example: fhdl build project.4th" type cr
+        EXIT
+    THEN
+    
+    \ Передаем имя файла в модуль fhdl.builder.4th
+    param-arg 2@ run-build
 ;
 
 : fhdl ( -- )
+    \ Сначала загружаем конфигурацию
+    load-config
+
     read_args
 
-    s" Generate Verilog HDL file" type cr
-    s" Input  file: " type get_param1 type cr
-    s" Output file: " type get_param2 type cr
+    \ Если аргументов нет
+    cmd-arg 2@ nip 0= IF fhdl.help EXIT THEN
 
-    get_param2 fopen to fd-out
+    \ Обработка команд
+    cmd-arg 2@ s" version" COMPARE 0= IF fhdl.version EXIT THEN
+    cmd-arg 2@ s" help"    COMPARE 0= IF fhdl.help    EXIT THEN
+    cmd-arg 2@ s" build"   COMPARE 0= IF fhdl.build   EXIT THEN
 
-    init-hdl-module
-
-    get_param1 included
-
-    end-prev-hdl-module
-
-    fd-out fclose
-
+    \ Ошибка
+    s" Unknown command." type cr fhdl.help
 ;
 
-fhdl cr bye
-
+fhdl bye
