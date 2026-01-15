@@ -1,35 +1,75 @@
 \ fhdl.builder.4th
-\ V3: Поддержка signed и reg (Attributes)
+\ V4.1: Поддержка assign + игнорирование комментариев
 
 \ ==========================================================
 \ 1. Хранилище данных
 \ ==========================================================
 
 100 constant MAX_PORTS
+50  constant MAX_ASSIGNS
 32  constant NAME_LIMIT
+64  constant EXPR_LIMIT
 
 create mod-name-buf 256 allot
 variable mod-defined   0 mod-defined !
 
-\ Массивы свойств портов
 create p-names  MAX_PORTS NAME_LIMIT * allot 
 create p-widths MAX_PORTS cells allot
-create p-types  MAX_PORTS cells allot  \ 0=input, 1=output, 2=inout
-create p-attrs  MAX_PORTS cells allot  \ Битовая маска: 1=reg, 2=signed
+create p-types  MAX_PORTS cells allot
+create p-attrs  MAX_PORTS cells allot
 
 variable port-count    0 port-count !
-
-\ Временные флаги для текущего определения
 variable is-reg        0 is-reg !
 variable is-signed     0 is-signed !
 
+create a-lhs  MAX_ASSIGNS NAME_LIMIT * allot
+create a-rhs  MAX_ASSIGNS EXPR_LIMIT * allot
+variable assign-count  0 assign-count !
+
 \ ==========================================================
-\ 2. Вспомогательная логика
+\ 2. Утилиты обработки строк
+\ ==========================================================
+
+\ Удаляет всё после символа '\' (включая сам символ)
+: strip-comment ( addr u -- addr u' )
+    2dup bounds ?DO
+        i c@ 92 = IF  \ 92 = ASCII code for '\'
+            drop i over - LEAVE
+        THEN
+    LOOP ;
+
+\ Удаляет пробелы справа
+: trim-right ( addr u -- addr u' )
+    BEGIN
+        dup 0 >
+    WHILE
+        2dup 1- + c@ 32 = IF
+            1-
+        ELSE
+            EXIT
+        THEN
+    REPEAT ;
+
+\ Пропуск пробелов и знака '=' в начале строки
+: skip-equals ( addr u -- addr' u' )
+    BEGIN
+        dup 0 >
+    WHILE
+        over c@ dup 32 = swap 61 = or IF \ 32=space, 61='='
+            1 /string
+        ELSE
+            EXIT
+        THEN
+    REPEAT ;
+
+\ ==========================================================
+\ 3. Основная логика
 \ ==========================================================
 
 : reset-builder
     0 mod-defined !
     0 port-count !
+    0 assign-count !
     0 is-reg !
     0 is-signed ! ;
 
@@ -41,28 +81,30 @@ variable is-signed     0 is-signed !
         cr s" [ERROR] Too many ports!" type cr bye
     THEN
 
-    >r >r ( R: type width )
-    
-    \ Сохраняем имя
+    >r >r 
     port-count @ get-name-addr place
-    
-    \ Сохраняем ширину и тип
     r> port-count @ cells p-widths + !
     r> port-count @ cells p-types + !
-
-    \ Сохраняем атрибуты (bit0=reg, bit1=signed)
-    is-reg @ 
-    is-signed @ 2 * + 
-    port-count @ cells p-attrs + !
-
-    \ Сбрасываем флаги и увеличиваем счетчик
-    0 is-reg !
-    0 is-signed !
+    
+    is-reg @ is-signed @ 2 * + port-count @ cells p-attrs + !
+    0 is-reg ! 0 is-signed !
     1 port-count +! 
 ;
 
+: register-assign ( lhs-addr lhs-u rhs-addr rhs-u -- )
+    assign-count @ MAX_ASSIGNS >= IF
+        cr s" [ERROR] Too many assigns!" type cr bye
+    THEN
+    
+    skip-equals \ Убираем " = " в начале
+    
+    assign-count @ EXPR_LIMIT * a-rhs + place
+    assign-count @ NAME_LIMIT * a-lhs + place
+    
+    1 assign-count +! ;
+
 \ ==========================================================
-\ 3. DSL - Словарь разметки
+\ 4. DSL - Словарь разметки
 \ ==========================================================
 
 warnings off
@@ -70,46 +112,33 @@ warnings off
 : module: ( "name" -- )
     parse-name mod-name-buf place
     1 mod-defined !
-    0 port-count ! ;
-
-\ --- Модификаторы ---
-\ Устанавливают флаг только для СЛЕДУЮЩЕГО определения
+    0 port-count ! 
+    0 assign-count ! ;
 
 : reg    1 is-reg ! ;
 : signed 1 is-signed ! ;
 
-\ --- Определения портов ---
+: input:      parse-name 1 0 register-port ;
+: output:     parse-name 1 1 register-port ;
+: inout:      parse-name 1 2 register-port ;
+: input-bus:  parse-name parse-name evaluate 0 register-port ;
+: output-bus: parse-name parse-name evaluate 1 register-port ;
+: inout-bus:  parse-name parse-name evaluate 2 register-port ;
 
-: input: 
-    parse-name 1 0 register-port ;
-
-: output: 
-    parse-name 1 1 register-port ;
-
-: inout:
-    parse-name 1 2 register-port ;
-
-: input-bus:
-    parse-name          
-    parse-name evaluate 
-    0 register-port ;
-
-: output-bus:
-    parse-name          
-    parse-name evaluate 
-    1 register-port ;
-
-: inout-bus:
-    parse-name          
-    parse-name evaluate 
-    2 register-port ;
+\ assign: LHS [=] RHS... [\ comment]
+: assign: 
+    parse-name        ( lhs-addr lhs-u )
+    0 parse           ( lhs rhs-raw )
+    strip-comment     ( lhs rhs-no-comment )
+    trim-right        ( lhs rhs-clean )
+    register-assign ;
 
 : end-module ;
 
 warnings on
 
 \ ==========================================================
-\ 4. Генератор Verilog
+\ 5. Генератор Verilog
 \ ==========================================================
 
 : .width ( width -- )
@@ -121,11 +150,8 @@ warnings on
     dup 2 = IF ." inout "  drop EXIT THEN
     drop ." wire " ;
 
-\ Печать атрибутов (reg, signed)
 : .attrs ( attr -- )
-    \ Проверяем бит 0 (reg)
     dup 1 and IF ." reg " THEN
-    \ Проверяем бит 1 (signed)
     2 and IF ." signed " THEN ;
 
 : gen-header-ports
@@ -138,17 +164,20 @@ warnings on
 : gen-decl-ports
     port-count @ 0 ?DO
         cr ."   "
-        \ 1. Направление (input/output)
         i cells p-types + @ .dir
-        
-        \ 2. Атрибуты (reg signed)
         i cells p-attrs + @ .attrs
-
-        \ 3. Ширина ([7:0])
         i cells p-widths + @ .width
-
-        \ 4. Имя
         i get-name-addr count type
+        ." ;"
+    LOOP
+;
+
+: gen-assigns
+    assign-count @ 0 ?DO
+        cr ."   assign "
+        i NAME_LIMIT * a-lhs + count type
+        ."  = "
+        i EXPR_LIMIT * a-rhs + count type
         ." ;"
     LOOP
 ;
@@ -164,12 +193,14 @@ warnings on
     
     gen-decl-ports
     cr
+    gen-assigns
+    cr
     
     s" endmodule" type cr
 ;
 
 \ ==========================================================
-\ 5. Точка входа
+\ 6. Точка входа
 \ ==========================================================
 
 : run-build ( addr u -- )
@@ -192,4 +223,3 @@ warnings on
         cr s" [ERROR] File not found: " type type cr
     THEN
 ;
-
