@@ -2,54 +2,43 @@
 include ~/fmix/forth-packages/ttester/1.1.0/ttester.4th
 require ../fhdl.builder.4th
 
-\ Переименовали str= в streq, чтобы не конфликтовать с библиотеками Gforth
 : streq ( addr u addr u -- flag ) COMPARE 0= ;
 
-TESTING Assign Logic
+TESTING Complex Assigns
 
 T{ 
-    \ Определяем модуль с assign
-    module: logic_gate
-        input: a
-        input: b
-        output: y_and
-        output: y_inv
+    module: complex_logic
+        input-bus: a 8
+        input-bus: b 8
+        output-bus: sum 8
+        output: carry
         
-        \ ВАЖНО: Комментарии нельзя писать в той же строке, что и assign:,
-        \ так как assign: читает строку до конца.
+        \ 1. Сложная левая часть с пробелами и запятыми
+        \ Обязательно нужен знак '='
+        assign: {carry, sum} = a + b
         
-        \ С пробелами и равно
-        assign: y_and = a & b
+        \ 2. Стандартный стиль (можно без пробелов вокруг =)
+        assign: x=y
         
-        \ Без равно
-        assign: y_inv ~a
+        \ 3. Старый стиль без равно (только для простых имен)
+        assign: simple ~complex
     end-module
 
-    \ Проверяем количество assign
     assign-count @ 
--> 2 }T
+-> 3 }T
 
-\ --- Проверяем первый assign (y_and) ---
-T{ 
-    \ LHS должно быть "y_and"
-    0 NAME_LIMIT * a-lhs + count s" y_and" streq 
--> TRUE }T
+\ --- Проверка 1: {carry, sum} ---
+T{ 0 NAME_LIMIT * a-lhs + count s" {carry, sum}" streq -> TRUE }T
+T{ 0 EXPR_LIMIT * a-rhs + count s" a + b"        streq -> TRUE }T
 
-T{ 
-    \ RHS должно быть "a & b" (без комментариев и мусора)
-    0 EXPR_LIMIT * a-rhs + count s" a & b" streq 
--> TRUE }T
+\ --- Проверка 2: x=y ---
+T{ 1 NAME_LIMIT * a-lhs + count s" x" streq -> TRUE }T
+T{ 1 EXPR_LIMIT * a-rhs + count s" y" streq -> TRUE }T
 
-\ --- Проверяем второй assign (y_inv) ---
-T{ 
-    \ LHS -> "y_inv"
-    1 NAME_LIMIT * a-lhs + count s" y_inv" streq 
--> TRUE }T
-
-T{ 
-    \ RHS -> "~a"
-    1 EXPR_LIMIT * a-rhs + count s" ~a" streq 
--> TRUE }T
+\ --- Проверка 3: simple ~complex ---
+T{ 2 NAME_LIMIT * a-lhs + count s" simple"   streq -> TRUE }T
+T{ 2 EXPR_LIMIT * a-rhs + count s" ~complex" streq -> TRUE }T
 
 CR .( Tests finished successfully! ) CR
 bye
+

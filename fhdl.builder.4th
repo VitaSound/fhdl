@@ -1,5 +1,5 @@
 \ fhdl.builder.4th
-\ V4.1: Поддержка assign + игнорирование комментариев
+\ V5.2: Игнорирование лишней точки с запятой
 
 \ ==========================================================
 \ 1. Хранилище данных
@@ -7,7 +7,7 @@
 
 100 constant MAX_PORTS
 50  constant MAX_ASSIGNS
-32  constant NAME_LIMIT
+64  constant NAME_LIMIT
 64  constant EXPR_LIMIT
 
 create mod-name-buf 256 allot
@@ -30,40 +30,46 @@ variable assign-count  0 assign-count !
 \ 2. Утилиты обработки строк
 \ ==========================================================
 
-\ Удаляет всё после символа '\' (включая сам символ)
 : strip-comment ( addr u -- addr u' )
     2dup bounds ?DO
-        i c@ 92 = IF  \ 92 = ASCII code for '\'
-            drop i over - LEAVE
-        THEN
+        i c@ 92 = IF drop i over - LEAVE THEN
     LOOP ;
 
-\ Удаляет пробелы справа
 : trim-right ( addr u -- addr u' )
-    BEGIN
-        dup 0 >
-    WHILE
-        2dup 1- + c@ 32 = IF
-            1-
-        ELSE
-            EXIT
-        THEN
+    BEGIN dup 0 > WHILE
+        2dup 1- + c@ 32 = IF 1- ELSE EXIT THEN
     REPEAT ;
 
-\ Пропуск пробелов и знака '=' в начале строки
-: skip-equals ( addr u -- addr' u' )
-    BEGIN
-        dup 0 >
-    WHILE
-        over c@ dup 32 = swap 61 = or IF \ 32=space, 61='='
-            1 /string
-        ELSE
-            EXIT
-        THEN
+: trim-left ( addr u -- addr' u' )
+    BEGIN dup 0 > WHILE
+        over c@ 32 = IF 1 /string ELSE EXIT THEN
     REPEAT ;
+
+: trim ( addr u -- addr' u' )
+    trim-left trim-right ;
+
+\ --- НОВОЕ: Удаление точки с запятой в конце ---
+: strip-semicolon ( addr u -- addr u' )
+    dup 0 > IF
+        2dup 1- + c@ [char] ; = IF
+            1-
+        THEN
+    THEN ;
+
+: split-by-char ( addr u char -- lhs-a lhs-u rhs-a rhs-u flag )
+    >r 2dup r> scan ( addr u found-addr found-u )
+    dup 0= IF
+        2drop 2drop false
+    ELSE
+        2dup 1 /string ( addr u found-addr found-u rhs-a rhs-u )
+        2>r            ( addr u found-addr found-u ) ( R: rhs-a rhs-u )
+        drop nip       ( addr found-addr )
+        over -         ( addr lhs-len )
+        2r> true
+    THEN ;
 
 \ ==========================================================
-\ 3. Основная логика
+\ 3. Логика Builder
 \ ==========================================================
 
 : reset-builder
@@ -96,15 +102,13 @@ variable assign-count  0 assign-count !
         cr s" [ERROR] Too many assigns!" type cr bye
     THEN
     
-    skip-equals \ Убираем " = " в начале
-    
     assign-count @ EXPR_LIMIT * a-rhs + place
     assign-count @ NAME_LIMIT * a-lhs + place
     
     1 assign-count +! ;
 
 \ ==========================================================
-\ 4. DSL - Словарь разметки
+\ 4. DSL
 \ ==========================================================
 
 warnings off
@@ -125,13 +129,27 @@ warnings off
 : output-bus: parse-name parse-name evaluate 1 register-port ;
 : inout-bus:  parse-name parse-name evaluate 2 register-port ;
 
-\ assign: LHS [=] RHS... [\ comment]
 : assign: 
-    parse-name        ( lhs-addr lhs-u )
-    0 parse           ( lhs rhs-raw )
-    strip-comment     ( lhs rhs-no-comment )
-    trim-right        ( lhs rhs-clean )
-    register-assign ;
+    \ 1. Читаем строку
+    0 parse strip-comment trim ( addr u )
+    
+    \ 2. Удаляем точку с запятой, если она есть, и снова чистим пробелы
+    strip-semicolon trim
+
+    \ 3. Разделяем
+    2dup [char] = split-by-char IF
+        trim 2swap trim 2swap
+        register-assign
+        2drop
+    ELSE
+        2dup 32 split-by-char IF
+            trim 2swap trim 2swap
+            register-assign
+            2drop
+        ELSE
+            cr s" [ERROR] Invalid assign format: " type type cr bye
+        THEN
+    THEN ;
 
 : end-module ;
 
