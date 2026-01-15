@@ -1,5 +1,5 @@
 \ fhdl.builder.4th
-\ V5.2: Игнорирование лишней точки с запятой
+\ V6: Поддержка parameters
 
 \ ==========================================================
 \ 1. Хранилище данных
@@ -7,6 +7,7 @@
 
 100 constant MAX_PORTS
 50  constant MAX_ASSIGNS
+16  constant MAX_PARAMS     \ Макс. количество параметров
 64  constant NAME_LIMIT
 64  constant EXPR_LIMIT
 
@@ -17,7 +18,6 @@ create p-names  MAX_PORTS NAME_LIMIT * allot
 create p-widths MAX_PORTS cells allot
 create p-types  MAX_PORTS cells allot
 create p-attrs  MAX_PORTS cells allot
-
 variable port-count    0 port-count !
 variable is-reg        0 is-reg !
 variable is-signed     0 is-signed !
@@ -25,6 +25,11 @@ variable is-signed     0 is-signed !
 create a-lhs  MAX_ASSIGNS NAME_LIMIT * allot
 create a-rhs  MAX_ASSIGNS EXPR_LIMIT * allot
 variable assign-count  0 assign-count !
+
+\ --- Параметры ---
+create param-names  MAX_PARAMS NAME_LIMIT * allot
+create param-values MAX_PARAMS EXPR_LIMIT * allot
+variable param-count   0 param-count !
 
 \ ==========================================================
 \ 2. Утилиты обработки строк
@@ -48,11 +53,17 @@ variable assign-count  0 assign-count !
 : trim ( addr u -- addr' u' )
     trim-left trim-right ;
 
-\ --- НОВОЕ: Удаление точки с запятой в конце ---
 : strip-semicolon ( addr u -- addr u' )
     dup 0 > IF
-        2dup 1- + c@ [char] ; = IF
-            1-
+        2dup 1- + c@ [char] ; = IF 1- THEN
+    THEN ;
+
+\ Удаляет ведущий знак равенства (для параметров)
+: strip-equals ( addr u -- addr' u' )
+    trim-left
+    dup 0 > IF
+        over c@ [char] = = IF 
+            1 /string trim-left 
         THEN
     THEN ;
 
@@ -76,6 +87,7 @@ variable assign-count  0 assign-count !
     0 mod-defined !
     0 port-count !
     0 assign-count !
+    0 param-count !
     0 is-reg !
     0 is-signed ! ;
 
@@ -86,12 +98,10 @@ variable assign-count  0 assign-count !
     port-count @ MAX_PORTS >= IF
         cr s" [ERROR] Too many ports!" type cr bye
     THEN
-
     >r >r 
     port-count @ get-name-addr place
     r> port-count @ cells p-widths + !
     r> port-count @ cells p-types + !
-    
     is-reg @ is-signed @ 2 * + port-count @ cells p-attrs + !
     0 is-reg ! 0 is-signed !
     1 port-count +! 
@@ -101,11 +111,17 @@ variable assign-count  0 assign-count !
     assign-count @ MAX_ASSIGNS >= IF
         cr s" [ERROR] Too many assigns!" type cr bye
     THEN
-    
     assign-count @ EXPR_LIMIT * a-rhs + place
     assign-count @ NAME_LIMIT * a-lhs + place
-    
     1 assign-count +! ;
+
+: register-param ( name-addr name-u val-addr val-u -- )
+    param-count @ MAX_PARAMS >= IF
+        cr s" [ERROR] Too many parameters!" type cr bye
+    THEN
+    param-count @ EXPR_LIMIT * param-values + place
+    param-count @ NAME_LIMIT * param-names + place
+    1 param-count +! ;
 
 \ ==========================================================
 \ 4. DSL
@@ -117,7 +133,8 @@ warnings off
     parse-name mod-name-buf place
     1 mod-defined !
     0 port-count ! 
-    0 assign-count ! ;
+    0 assign-count ! 
+    0 param-count ! ;
 
 : reg    1 is-reg ! ;
 : signed 1 is-signed ! ;
@@ -130,26 +147,28 @@ warnings off
 : inout-bus:  parse-name parse-name evaluate 2 register-port ;
 
 : assign: 
-    \ 1. Читаем строку
-    0 parse strip-comment trim ( addr u )
-    
-    \ 2. Удаляем точку с запятой, если она есть, и снова чистим пробелы
+    0 parse strip-comment trim
     strip-semicolon trim
-
-    \ 3. Разделяем
     2dup [char] = split-by-char IF
-        trim 2swap trim 2swap
-        register-assign
-        2drop
+        trim 2swap trim 2swap register-assign 2drop
     ELSE
         2dup 32 split-by-char IF
-            trim 2swap trim 2swap
-            register-assign
-            2drop
+            trim 2swap trim 2swap register-assign 2drop
         ELSE
             cr s" [ERROR] Invalid assign format: " type type cr bye
         THEN
     THEN ;
+
+\ parameter: NAME [=] VALUE [;]
+: parameter:
+    parse-name ( name-addr name-u )
+    
+    \ Читаем остаток строки (значение)
+    0 parse strip-comment trim 
+    strip-semicolon trim
+    strip-equals    ( value-addr value-u )
+    
+    register-param ;
 
 : end-module ;
 
@@ -171,6 +190,16 @@ warnings on
 : .attrs ( attr -- )
     dup 1 and IF ." reg " THEN
     2 and IF ." signed " THEN ;
+
+: gen-params
+    param-count @ 0 ?DO
+        cr ."   parameter "
+        i NAME_LIMIT * param-names + count type
+        ."  = "
+        i EXPR_LIMIT * param-values + count type
+        ." ;"
+    LOOP
+;
 
 : gen-header-ports
     port-count @ 0 ?DO
@@ -209,6 +238,7 @@ warnings on
     gen-header-ports 
     s" );" type       
     
+    gen-params       \ <-- Параметры выводятся первыми
     gen-decl-ports
     cr
     gen-assigns
@@ -241,3 +271,4 @@ warnings on
         cr s" [ERROR] File not found: " type type cr
     THEN
 ;
+

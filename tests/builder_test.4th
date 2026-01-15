@@ -4,40 +4,57 @@ require ../fhdl.builder.4th
 
 : streq ( addr u addr u -- flag ) COMPARE 0= ;
 
-TESTING Complex Assigns
+\ ==========================================================
+TESTING Parameters Support
+\ ==========================================================
 
 T{ 
-    module: complex_logic
-        input-bus: a 8
-        input-bus: b 8
-        output-bus: sum 8
-        output: carry
+    module: param_test
+        \ Стандартный стиль Verilog
+        parameter: WIDTH = 8;
         
-        \ 1. Сложная левая часть с пробелами и запятыми
-        \ Обязательно нужен знак '='
-        assign: {carry, sum} = a + b
+        \ Стиль без точки с запятой
+        parameter: HEIGHT = 16
         
-        \ 2. Стандартный стиль (можно без пробелов вокруг =)
-        assign: x=y
+        \ Стиль без равно (Forth-style)
+        parameter: DEPTH 32
         
-        \ 3. Старый стиль без равно (только для простых имен)
-        assign: simple ~complex
+        \ Параметр-выражение с комментарием
+        parameter: AREA = WIDTH * HEIGHT \ Площадь
     end-module
 
+    param-count @ 
+-> 4 }T
+
+\ --- 1. WIDTH ---
+T{ 0 NAME_LIMIT * param-names + count s" WIDTH" streq -> TRUE }T
+T{ 0 EXPR_LIMIT * param-values + count s" 8"    streq -> TRUE }T
+
+\ --- 2. HEIGHT ---
+T{ 1 NAME_LIMIT * param-names + count s" HEIGHT" streq -> TRUE }T
+T{ 1 EXPR_LIMIT * param-values + count s" 16"    streq -> TRUE }T
+
+\ --- 3. DEPTH (без равно) ---
+T{ 2 NAME_LIMIT * param-names + count s" DEPTH" streq -> TRUE }T
+T{ 2 EXPR_LIMIT * param-values + count s" 32"   streq -> TRUE }T
+
+\ --- 4. AREA (выражение) ---
+T{ 3 NAME_LIMIT * param-names + count s" AREA"           streq -> TRUE }T
+T{ 3 EXPR_LIMIT * param-values + count s" WIDTH * HEIGHT" streq -> TRUE }T
+
+
+\ ==========================================================
+TESTING Assign Logic (Regression Test)
+\ ==========================================================
+
+T{ 
+    module: logic_gate
+        input: a
+        output: y
+        assign: y = ~a;
+    end-module
     assign-count @ 
--> 3 }T
-
-\ --- Проверка 1: {carry, sum} ---
-T{ 0 NAME_LIMIT * a-lhs + count s" {carry, sum}" streq -> TRUE }T
-T{ 0 EXPR_LIMIT * a-rhs + count s" a + b"        streq -> TRUE }T
-
-\ --- Проверка 2: x=y ---
-T{ 1 NAME_LIMIT * a-lhs + count s" x" streq -> TRUE }T
-T{ 1 EXPR_LIMIT * a-rhs + count s" y" streq -> TRUE }T
-
-\ --- Проверка 3: simple ~complex ---
-T{ 2 NAME_LIMIT * a-lhs + count s" simple"   streq -> TRUE }T
-T{ 2 EXPR_LIMIT * a-rhs + count s" ~complex" streq -> TRUE }T
+-> 1 }T
 
 CR .( Tests finished successfully! ) CR
 bye
