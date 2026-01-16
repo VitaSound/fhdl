@@ -10,9 +10,8 @@ module: flexible_adder
     \ если мы добавим поддержку параметра как ширины в будущем.
     \ Пока ширину шины пишем явно числом, так как `input-bus:` делает `evaluate`)
     
-    input-bus: a 8
-    input-bus: b 8
-    output-bus: sum 8
+    input-bus: data [WIDTH-1:0]
+    input-bus: mask [0:7]
     
     assign: sum = a + b + INIT_VAL;
 end-module

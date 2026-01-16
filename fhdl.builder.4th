@@ -1,5 +1,5 @@
 \ fhdl.builder.4th
-\ V6: Поддержка parameters
+\ V7: Поддержка raw-строк для диапазонов шин (Verilog style)
 
 \ ==========================================================
 \ 1. Хранилище данных
@@ -10,12 +10,13 @@
 16  constant MAX_PARAMS     \ Макс. количество параметров
 64  constant NAME_LIMIT
 64  constant EXPR_LIMIT
+64  constant RANGE_LIMIT    \ Макс. длина строки диапазона (например "[WIDTH-1:0]")
 
 create mod-name-buf 256 allot
 variable mod-defined   0 mod-defined !
 
 create p-names  MAX_PORTS NAME_LIMIT * allot 
-create p-widths MAX_PORTS cells allot
+create p-ranges MAX_PORTS RANGE_LIMIT * allot \ Бывший p-widths, теперь храним строки
 create p-types  MAX_PORTS cells allot
 create p-attrs  MAX_PORTS cells allot
 variable port-count    0 port-count !
@@ -94,15 +95,27 @@ variable param-count   0 param-count !
 : get-name-addr ( index -- addr )
     NAME_LIMIT * p-names + ;
 
-: register-port ( width type -- )
+: get-range-addr ( index -- addr )
+    RANGE_LIMIT * p-ranges + ;
+
+\ Теперь принимает строку диапазона вместо ширины
+: register-port ( name-addr name-u range-addr range-u type -- )
     port-count @ MAX_PORTS >= IF
         cr s" [ERROR] Too many ports!" type cr bye
     THEN
-    >r >r 
+    >r \ Сохраняем type на R-стеке
+    
+    \ Сохраняем строку диапазона (range)
+    port-count @ get-range-addr place
+    
+    \ Сохраняем имя порта (name)
     port-count @ get-name-addr place
-    r> port-count @ cells p-widths + !
+    
+    \ Сохраняем тип и атрибуты
     r> port-count @ cells p-types + !
     is-reg @ is-signed @ 2 * + port-count @ cells p-attrs + !
+    
+    \ Сброс флагов и инкремент
     0 is-reg ! 0 is-signed !
     1 port-count +! 
 ;
@@ -139,12 +152,19 @@ warnings off
 : reg    1 is-reg ! ;
 : signed 1 is-signed ! ;
 
-: input:      parse-name 1 0 register-port ;
-: output:     parse-name 1 1 register-port ;
-: inout:      parse-name 1 2 register-port ;
-: input-bus:  parse-name parse-name evaluate 0 register-port ;
-: output-bus: parse-name parse-name evaluate 1 register-port ;
-: inout-bus:  parse-name parse-name evaluate 2 register-port ;
+\ Читает остаток строки как диапазон (например "[7:0]")
+: parse-range ( -- addr u )
+    0 parse strip-comment trim strip-semicolon trim ;
+
+\ Одинарные порты передают пустую строку диапазона
+: input:      parse-name s" "          0 register-port ;
+: output:     parse-name s" "          1 register-port ;
+: inout:      parse-name s" "          2 register-port ;
+
+\ Шинные порты читают диапазон "как есть"
+: input-bus:  parse-name parse-range 0 register-port ;
+: output-bus: parse-name parse-range 1 register-port ;
+: inout-bus:  parse-name parse-range 2 register-port ;
 
 : assign: 
     0 parse strip-comment trim
@@ -178,8 +198,15 @@ warnings on
 \ 5. Генератор Verilog
 \ ==========================================================
 
-: .width ( width -- )
-    dup 1 > IF ." [" 1- 0 .r ." :0] " ELSE drop ." " THEN ;
+\ Выводит диапазон, если он есть
+: .width ( index -- )
+    get-range-addr count 
+    dup 0 > IF
+        \ Если строка не пустая, выводим её и пробел
+        type space 
+    ELSE
+        2drop
+    THEN ;
 
 : .dir ( type -- )
     dup 0 = IF ." input "  drop EXIT THEN
@@ -213,7 +240,10 @@ warnings on
         cr ."   "
         i cells p-types + @ .dir
         i cells p-attrs + @ .attrs
-        i cells p-widths + @ .width
+        
+        \ Выводим диапазон (если есть) перед именем
+        i .width
+        
         i get-name-addr count type
         ." ;"
     LOOP
@@ -271,4 +301,3 @@ warnings on
         cr s" [ERROR] File not found: " type type cr
     THEN
 ;
-

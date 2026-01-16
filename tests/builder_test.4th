@@ -44,6 +44,44 @@ T{ 3 EXPR_LIMIT * param-values + count s" WIDTH * HEIGHT" streq -> TRUE }T
 
 
 \ ==========================================================
+TESTING Bus Support (Raw Strings - V7)
+\ ==========================================================
+\ Проверяем, что диапазоны сохраняются как строки, а не вычисляются
+
+T{
+    module: bus_test
+        parameter: WIDTH = 32;
+        
+        \ 1. Шина с выражением Verilog
+        input-bus: data [WIDTH-1:0]
+        
+        \ 2. Шина с явным диапазоном (Little Endian)
+        output-bus: debug [0:7]
+        
+        \ 3. Одиночный бит (input:) должен иметь пустой диапазон
+        input: clk
+    end-module
+    
+    port-count @
+-> 3 }T
+
+\ --- 1. data [WIDTH-1:0] ---
+\ Проверяем имя
+T{ 0 NAME_LIMIT * p-names + count s" data" streq -> TRUE }T
+\ Проверяем, что диапазон сохранен как строка
+T{ 0 RANGE_LIMIT * p-ranges + count s" [WIDTH-1:0]" streq -> TRUE }T
+
+\ --- 2. debug [0:7] ---
+T{ 1 NAME_LIMIT * p-names + count s" debug" streq -> TRUE }T
+T{ 1 RANGE_LIMIT * p-ranges + count s" [0:7]" streq -> TRUE }T
+
+\ --- 3. clk (single bit) ---
+T{ 2 NAME_LIMIT * p-names + count s" clk" streq -> TRUE }T
+\ Длина строки диапазона должна быть 0
+T{ 2 RANGE_LIMIT * p-ranges + count nip -> 0 }T
+
+
+\ ==========================================================
 TESTING Assign Logic (Regression Test)
 \ ==========================================================
 
@@ -58,4 +96,3 @@ T{
 
 CR .( Tests finished successfully! ) CR
 bye
-

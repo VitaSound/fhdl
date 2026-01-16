@@ -9,13 +9,13 @@ module: top_system
     inout: dat
     
     \ Вход со знаком
-    signed input-bus: audio_in 16
+    signed input-bus: audio_in [15:0]
 
     \ Выход типа reg (для использования в always блоках)
     reg output: status_led
     
     \ Выход типа reg со знаком (сложный случай)
-    reg signed output-bus: calc_res 32
+    reg signed output-bus: calc_res [31:0]
     
     \ Обычный провод
     output-bus: simple_data 8
