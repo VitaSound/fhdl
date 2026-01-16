@@ -3,18 +3,10 @@
 
 \ Структура ПАРАМЕТРА
 begin-structure param%
-    field: param.next       \ Указатель на следующий (0)
-    field: param.name-addr  field: param.name-len
-    field: param.val-addr   field: param.val-len
-end-structure
-
-\ Обновленная структура МОДУЛЯ
-begin-structure module%
-    field: mod.next         \ Next module
-    field: mod.name-addr    
-    field: mod.name-len
-    
-    \ Списки
-    field: mod.params-head  field: mod.params-tail
-    \ (сюда потом добавятся порты)
+    field: param.next
+    field: param.name-addr  
+    field: param.name-len
+    field: param.val-addr   
+    field: param.val-len
+    field: param.is-local   \ 0 = parameter, 1 = localparam
 end-structure
