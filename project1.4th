@@ -1,22 +1,13 @@
 \ project1.4th
 
-module: top_system
-    \ Обычные порты
-    input: sys_clk
-    input: sys_rst
+\ 1. Создаем первый модуль, передавая строку со стека
+s" top_module" module,
 
-    \ двунаправленный порт
-    inout: dat
-    
-    \ Вход со знаком
-    signed input-bus: audio_in [15:0]
+\ 2. Создаем второй модуль, используя слово-помощник 'name'
+name sub_module_A module,
 
-    \ Выход типа reg (для использования в always блоках)
-    reg output: status_led
-    
-    \ Выход типа reg со знаком (сложный случай)
-    reg signed output-bus: calc_res [31:0]
-    
-    \ Обычный провод
-    output-bus: simple_data 8
-end-module
+\ 3. Генерируем Verilog код для всех накопленных модулей
+generate-verilog,
+
+\ 4. Очищаем память
+free-modules
