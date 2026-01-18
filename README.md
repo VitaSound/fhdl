@@ -46,6 +46,11 @@ Currently, the tool focuses on generating the **top-level module**—defining in
     fhdl build project.4th > project.v
     ```
 
+    check by verilator
+    ```bash
+    verilator --lint-only project.v
+    ```
+
 *   **Check version:**
     ```bash
     fhdl version
