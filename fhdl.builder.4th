@@ -130,8 +130,8 @@ warnings on
 : run-build ( addr u -- )
     reset-builder
     2dup file-status nip 0= IF
-        cr s" [BUILDER] Parsing file: " type 2dup type cr
-        ['] included catch dup IF cr s" [ERROR] Parsing failed: " type . cr 2drop drop EXIT THEN drop
-    ELSE cr s" [ERROR] File not found: " type type cr THEN ;
+        cr s" // [BUILDER] Parsing file: " type 2dup type cr
+        ['] included catch dup IF cr s" // [ERROR] Parsing failed: " type . cr 2drop drop EXIT THEN drop
+    ELSE cr s" // [ERROR] File not found: " type type cr THEN ;
 
     

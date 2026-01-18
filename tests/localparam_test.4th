@@ -26,4 +26,3 @@ CR .( Localparam tests passed! ) CR
 generate-verilog,
 
 free-modules
-bye
