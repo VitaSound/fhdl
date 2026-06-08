@@ -155,6 +155,8 @@ To run the regression tests (built using a modified ttester):
 
 ```
 fmix test
+flint
+fcov run fmix test && fcov report
 ```
 
 # Roadmap
