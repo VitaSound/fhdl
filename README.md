@@ -1,5 +1,7 @@
 # FHDL (Forth HDL)
 
+[![Cov](https://img.shields.io/badge/Cov-76%25-green.svg)](https://github.com/VitaSound/fhdl)
+
 **FHDL** is a Gforth-based application for generating Verilog project files from Forth definitions. It introduces a specialized markup (DSL) within Forth files, which the application parses to build memory structures and generate a final Verilog module.
 
 Currently, the tool focuses on generating the **top-level module**—defining interfaces, parameters, and instantiating/connecting sub-modules—rather than generating complex behavioral logic (though basic assignments are supported).
