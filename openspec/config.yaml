@@ -6,7 +6,7 @@ context: |
   Keep OpenSpec structural headings and SHALL/MUST keywords in English.
 
   Проект: fhdl — ранний генератор Verilog из Forth-DSL (предшественник fhdlgen), часть экосистемы VitaSound feco.
-  Правила агента: AGENTS.md. Стек: Gforth, правила frules, package.4th. Примеры: project*.4th → project*.v.
+  Стек: Gforth, правила frules, package.4th. Примеры: project*.4th → project*.v.
   Новую функциональность генерации по умолчанию развивать в fhdlgen; здесь — исправления и эксперименты.
   Проверка: fmix test, flint, fcov run && fcov report; из Cursor — MCP vitasound-forth.
 
