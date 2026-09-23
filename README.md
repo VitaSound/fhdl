@@ -59,3 +59,4 @@ For install dependecies
 - [hdl-modules](https://github.com/VitaSound/hdl-modules) — Verilog module library and audio devices; the practical consumer of generated HDL. Module index: [AI_INDEX.md](https://github.com/VitaSound/hdl-modules/blob/master/AI_INDEX.md) (branch `master`)
 - [feco](https://github.com/VitaSound/feco) — catalog of the Forth toolchain: versions, coverage, bulk clone and install
 - [MIT](https://github.com/VitaSound/MIT) — engineering methodology: task decomposition and hardware/software stack levels
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec) — changes are planned in [`openspec/`](openspec/) (`/opsx-propose` in Cursor); context: [`openspec/config.yaml`](openspec/config.yaml)
