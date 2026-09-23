@@ -2,6 +2,7 @@
 
 begin-structure module%
     field: mod.next
+    field: mod.type
     field: mod.name-addr    
     field: mod.name-len
     

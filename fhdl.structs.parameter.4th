@@ -4,6 +4,7 @@
 \ Структура ПАРАМЕТРА
 begin-structure param%
     field: param.next
+    field: param.type
     field: param.name-addr  
     field: param.name-len
     field: param.val-addr   

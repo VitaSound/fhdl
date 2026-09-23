@@ -2,6 +2,11 @@
 
 [![Cov](https://img.shields.io/badge/Cov-76%25-green.svg)](https://github.com/VitaSound/fhdl)
 
+> **Archive.** Development moved to [fhdlgen](https://github.com/VitaSound/fhdlgen).
+> Keep this repository as a historical reference (DSL experiments, `try3` unified list,
+> abandoned `platforms` LiteX-boards port). New HDL work goes into `fhdlgen`;
+> the SoC / board / toolchain layer is planned in `fsoc`.
+
 **FHDL** is a Gforth-based application for generating Verilog project files from Forth definitions. It introduces a specialized markup (DSL) within Forth files, which the application parses to build memory structures and generate a final Verilog module.
 
 Currently, the tool focuses on generating the **top-level module**—defining interfaces, parameters, and instantiating/connecting sub-modules—rather than generating complex behavioral logic (though basic assignments are supported).

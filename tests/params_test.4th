@@ -1,48 +1,67 @@
 \ tests/params_test.4th
-include ~/fmix/forth-packages/ttester/1.1.0/ttester.4th
+require ~/fmix/forth-packages/ttester/1.2.1/ttester.4th
 require ../fhdl.builder.4th
+require ../fhdl.utils.4th
 
-: streq ( addr u addr u -- flag ) COMPARE 0= ;
 reset-builder
 
 \ ==========================================================
 TESTING Parameters
 \ ==========================================================
 
-\ Мы не тестируем module, внутри T{}, так как он не возвращает значений на стек
-s" design_ip" module,
+s" param_test_mod" module,
 
+\ --- Тест 1: Добавление первого параметра ---
 T{
-    \ 1. Добавляем параметры (stack effect: -- )
-    s" 32" s" BUS_WIDTH" parameter,
-    s" 64" s" DATA_WIDTH" parameter,
-    512    s" FIFO_DEPTH" param-int,
-    
-    \ Проверяем, что параметры добавились (голова списка не 0)
-    current-module @ mod.params-head @ 0= -> FALSE
-}T
+    \ 1. Строка + Строка
+    s" 32" s" WIDTH" parameter,
+    \ Проверяем, что список не пуст
+    current-module @ mod.params-head @ 0= 
+-> FALSE }T
 
-\ Проверка значений первого параметра (BUS_WIDTH)
+\ --- Тест 2: Проверка значений первого параметра ---
 T{
     current-module @ mod.params-head @ >r
-    r@ param.name-addr @ r@ param.name-len @ s" BUS_WIDTH" streq 
-    r@ param.val-addr @ r@ param.val-len @   s" 32"        streq 
+    \ Проверяем Имя
+    r@ param.name-addr @ r@ param.name-len @ s" WIDTH" streq
+    \ Проверяем Значение
+    r@ param.val-addr @ r@ param.val-len @   s" 32"    streq
+    \ Объединяем результаты (оба должны быть TRUE)
     AND
     r> drop
 -> TRUE }T
 
-\ Проверка значений последнего параметра (FIFO_DEPTH)
+\ --- Тест 3: Добавление и проверка Integer параметра ---
 T{
-    current-module @ mod.params-tail @ >r
-    r@ param.name-addr @ r@ param.name-len @ s" FIFO_DEPTH" streq 
-    r@ param.val-addr @ r@ param.val-len @   s" 512"        streq 
+    \ 2. Число + Строка
+    16 s" DEPTH" param-int,
+    
+    \ Берем второй параметр (head -> next)
+    current-module @ mod.params-head @ param.next @ >r
+    
+    r@ param.name-addr @ r@ param.name-len @ s" DEPTH" streq
+    r@ param.val-addr @ r@ param.val-len @   s" 16"    streq
     AND
     r> drop
 -> TRUE }T
 
+\ --- Тест 4: Добавление и проверка параметра с кавычками ---
+T{
+    \ 3. Сахар value с кавычками
+    value "FAST" name MODE parameter,
+    
+    \ Берем третий параметр (head -> next -> next)
+    current-module @ mod.params-head @ param.next @ param.next @ >r
+    
+    r@ param.name-addr @ r@ param.name-len @ s" MODE" streq
+    
+    \ Проверяем значение (оно должно содержать кавычки)
+    \ Используем s\" для экранирования кавычек внутри строки Forth
+    r@ param.val-addr @ r@ param.val-len @   s\" \"FAST\"" streq
+    
+    AND
+    r> drop
+-> TRUE }T
+
+free-all
 CR .( Parameters tests passed! ) CR
-
-\ Генерация вывода для проверки глазами
-generate-verilog,
-
-free-modules

@@ -1,8 +1,8 @@
 \ tests/localparam_test.4th
-include ~/fmix/forth-packages/ttester/1.1.0/ttester.4th
+require ~/fmix/forth-packages/ttester/1.2.1/ttester.4th
 require ../fhdl.builder.4th
+require ../fhdl.utils.4th
 
-: streq ( addr u addr u -- flag ) COMPARE 0= ;
 reset-builder
 
 s" test_mod" module,
@@ -25,4 +25,4 @@ CR .( Localparam tests passed! ) CR
 \ Генерация для визуальной проверки
 generate-verilog,
 
-free-modules
+free-all

@@ -14,7 +14,10 @@ require fhdl.builder.4th  \ Подключаем логику билдера
 ;
 
 : fhdl.help
-    cr s" Usage: fhdl <command>" type cr
+    cr
+    s" FHDL v" type pkg-version 2@ type
+    s"  is a Gforth-based application for generating Verilog project files from Forth definitions." type  cr
+    s" Usage: fhdl <command>" type cr
     s" Commands:" type cr
     s"    version      - Show version from package.4th" type cr 
     s"    help         - Show this message" type cr cr

@@ -1,8 +1,7 @@
 \ tests/structs_test.4th
-include ~/fmix/forth-packages/ttester/1.1.0/ttester.4th
+require ~/fmix/forth-packages/ttester/1.2.1/ttester.4th
 require ../fhdl.structs.4th
-
-: streq ( addr u addr u -- flag ) COMPARE 0= ;
+require ../fhdl.utils.4th
 
 VARIABLE my-head
 VARIABLE my-tail

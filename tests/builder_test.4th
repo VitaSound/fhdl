@@ -1,22 +1,27 @@
 \ tests/builder_test.4th
-include ~/fmix/forth-packages/ttester/1.1.0/ttester.4th
+require ~/fmix/forth-packages/ttester/1.2.1/ttester.4th
 require ../fhdl.builder.4th
-
-: streq ( addr u addr u -- flag ) COMPARE 0= ;
+require ../fhdl.utils.4th
 
 \ Сбросим билдер перед тестами
 reset-builder
 
 \ ==========================================================
-TESTING Builder V2 - Modules
+TESTING Builder V3 - Unified List
 \ ==========================================================
 
 \ 1. Создание первого модуля
 T{
     s" module_A" module,
     
-    \ Проверяем, что список не пуст
-    modules-head @ 0= -> FALSE 
+    \ Проверяем, что общий список не пуст
+    \ Было: modules-head, Стало: items-head
+    items-head @ 0= -> FALSE 
+}T
+
+T{
+    \ Проверяем, что созданный элемент - это МОДУЛЬ
+    items-head @ mod.type @ NODE_MODULE = -> TRUE
 }T
 
 T{
@@ -30,8 +35,8 @@ T{
     s" module_B" module,
     
     \ Проверяем целостность списка
-    \ ОШИБКА БЫЛА ТУТ: используем modules-tail вместо my-tail
-    modules-head @ modules-tail @ = -> FALSE 
+    \ items-head (начало) не равно items-tail (конец), значит элементов >= 2
+    items-head @ items-tail @ = -> FALSE 
 }T
 
 T{
@@ -42,7 +47,7 @@ T{
 
 T{
     \ Проверяем связь: module_A -> next == module_B
-    modules-head @ mod.next @ current-module @ = -> TRUE
+    items-head @ mod.next @ current-module @ = -> TRUE
 }T
 
 \ ==========================================================
@@ -50,12 +55,13 @@ TESTING Cleanup
 \ ==========================================================
 
 T{
-    free-modules
-    modules-head @ -> 0
+    \ В V3 используется free-all
+    free-all
+    items-head @ -> 0
 }T
 
 T{
     current-module @ -> 0
 }T
 
-CR .( Builder V2 tests passed successfully! ) CR
+CR .( Builder V3 tests passed successfully! ) CR
