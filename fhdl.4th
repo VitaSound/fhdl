@@ -1,129 +1,85 @@
-include string.fs
-include ~/fmix/forth-packages/f/0.2.4/compat-gforth.4th
+\ fhdl.4th
+\ FHDL - Forth HDL Interpreter
 
+require fhdl.reader.4th   \ Чтение конфига package.4th
+require fhdl.builder.4th  \ Подключаем логику билдера
 
-variable arg-param1
-variable arg-param1-size
-variable arg-param2
-variable arg-param2-size
-
-
-
-: get_param1 arg-param1 @ arg-param1-size @ ;
-: get_param2 arg-param2 @ arg-param2-size @ ;
-
-0 Value fd-out
-
-: fopen ( c-addr u – wfileid ) w/o create-file throw ;
-
-: fwrite fd-out write-file throw ;
-: fwriteln fd-out write-line throw ;
-
-: fclose 
-    dup
-    flush-file throw
-    close-file throw
-;
-
-variable def-module-state
-\ 0 - module name
-\ 1 - ports
-
-create name-string 255 allot
-create hdl-module-name-string 255 allot
-create hdl-module-ports-string 255 allot
-variable hdl-module-ports-count
-
-: module-fwrite 
-\ write module to file 
-    s" module " fwrite
-
-    s" " hdl-module-name-string $@ s+ fwrite
-    s" (" fwrite
-    hdl-module-ports-string $@ fwrite
-    s" );" fwriteln
-
-    s" endmodule" fwriteln
-;
-
-: init-hdl-module
-    0 def-module-state !
-    s" " hdl-module-ports-string $!
-    0 hdl-module-ports-count !
-;
-
-: end-prev-hdl-module
-    def-module-state @ 0>  IF
-        module-fwrite
-    THEN
-    init-hdl-module
-;
-
-: end-prev-hdl-port
-    hdl-module-ports-count @ 0>  IF
-        hdl-module-ports-string $@
-        s" , " $+
-        hdl-module-ports-string $!
-    THEN
-
-    hdl-module-ports-string $@
-    name-string $@
-    $+
-    hdl-module-ports-string $!
-    hdl-module-ports-count @ 1 + hdl-module-ports-count ! \ inc
-;
+2VARIABLE cmd-arg
+2VARIABLE param-arg
 
 : read_args
-    next-arg drop drop \ drop -e
-    next-arg arg-param1-size ! arg-param1 !
-    next-arg arg-param2-size ! arg-param2 !
+    s" FHDL_CMD" getenv 2dup nip IF
+        cmd-arg 2!
+    ELSE
+        2drop
+        next-arg 2drop \ Пропуск имени интерпретатора/скрипта
+        next-arg cmd-arg 2!
+    THEN
+    s" FHDL_PARAM" getenv 2dup nip IF
+        param-arg 2!
+    ELSE
+        2drop
+        next-arg param-arg 2!
+    THEN
 ;
 
-: name
-    parse-name name-string $!
+: fhdl.help
+    cr
+    s" FHDL v" type pkg-version 2@ type
+    s"  is a Gforth-based application for generating Verilog project files from Forth definitions." type  cr
+    s" Usage: fhdl <command>" type cr
+    s" Commands:" type cr
+    s"    version      - Show version from package.4th" type cr 
+    s"    help         - Show this message" type cr cr
 ;
 
-: sname
-    name-string $!
+: fhdl.version
+    cr s" ** (fhdl) fhdl v." type 
+    \ Используем переменную, заполненную в reader.fs
+    pkg-version 2@ type 
+    cr cr
 ;
 
-: hdl-module
-    end-prev-hdl-module
-
-    \ name-string -> hdl-module-name-string
-    name-string $@ hdl-module-name-string $!
-    1 def-module-state !
+\ Обработчик команды build
+: fhdl.build
+    \ Проверяем, есть ли параметр (имя файла)
+    param-arg 2@ nip 0= IF
+        cr s" Error: 'build' command requires a filename argument." type cr
+        s" Example: fhdl build project.4th" type cr
+        EXIT
+    THEN
+    
+    \ Передаем имя файла в модуль fhdl.builder.4th
+    param-arg 2@ run-build
 ;
 
-: hdl-port
-    end-prev-hdl-port
-
+\ Look up sd in wid; if found, drop sd, execute the word, return true.
+\ Otherwise leave any1+sd and return false.
+: obey-wordlist? ( any1 sd wid -- any2 true | any1 sd false )
+    >r 2dup r> search-wordlist IF
+        nip nip execute true EXIT
+    THEN false
 ;
 
-: hdl-include
-    s\" `include \"" fwrite
-    fwrite
-    s\" \"" fwriteln
-;
+wordlist constant fhdl.commands
+get-current fhdl.commands set-current
+    synonym version fhdl.version
+    synonym help    fhdl.help
+    synonym build   fhdl.build
+set-current
+
+: fhdl.dispatch-command ( sd.command -- )
+    dup 0= IF 2drop fhdl.help EXIT THEN
+    fhdl.commands obey-wordlist? IF EXIT THEN
+    s" Unknown command." type cr
+    2drop fhdl.help ;
 
 : fhdl ( -- )
+    \ Сначала загружаем конфигурацию
+    load-config
+
     read_args
-
-    s" Generate Verilog HDL file" type cr
-    s" Input  file: " type get_param1 type cr
-    s" Output file: " type get_param2 type cr
-
-    get_param2 fopen to fd-out
-
-    init-hdl-module
-
-    get_param1 included
-
-    end-prev-hdl-module
-
-    fd-out fclose
-
+    cmd-arg 2@ fhdl.dispatch-command
 ;
 
-fhdl cr bye
-
+fhdl bye
