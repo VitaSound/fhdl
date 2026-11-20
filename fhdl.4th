@@ -8,9 +8,19 @@ require fhdl.builder.4th  \ Подключаем логику билдера
 2VARIABLE param-arg
 
 : read_args
-    next-arg 2drop \ Пропуск имени интерпретатора/скрипта
-    next-arg cmd-arg 2!
-    next-arg param-arg 2!
+    s" FHDL_CMD" getenv 2dup nip IF
+        cmd-arg 2!
+    ELSE
+        2drop
+        next-arg 2drop \ Пропуск имени интерпретатора/скрипта
+        next-arg cmd-arg 2!
+    THEN
+    s" FHDL_PARAM" getenv 2dup nip IF
+        param-arg 2!
+    ELSE
+        2drop
+        next-arg param-arg 2!
+    THEN
 ;
 
 : fhdl.help
@@ -43,22 +53,33 @@ require fhdl.builder.4th  \ Подключаем логику билдера
     param-arg 2@ run-build
 ;
 
+\ Look up sd in wid; if found, drop sd, execute the word, return true.
+\ Otherwise leave any1+sd and return false.
+: obey-wordlist? ( any1 sd wid -- any2 true | any1 sd false )
+    >r 2dup r> search-wordlist IF
+        nip nip execute true EXIT
+    THEN false
+;
+
+wordlist constant fhdl.commands
+get-current fhdl.commands set-current
+    synonym version fhdl.version
+    synonym help    fhdl.help
+    synonym build   fhdl.build
+set-current
+
+: fhdl.dispatch-command ( sd.command -- )
+    dup 0= IF 2drop fhdl.help EXIT THEN
+    fhdl.commands obey-wordlist? IF EXIT THEN
+    s" Unknown command." type cr
+    2drop fhdl.help ;
+
 : fhdl ( -- )
     \ Сначала загружаем конфигурацию
     load-config
 
     read_args
-
-    \ Если аргументов нет
-    cmd-arg 2@ nip 0= IF fhdl.help EXIT THEN
-
-    \ Обработка команд
-    cmd-arg 2@ s" version" COMPARE 0= IF fhdl.version EXIT THEN
-    cmd-arg 2@ s" help"    COMPARE 0= IF fhdl.help    EXIT THEN
-    cmd-arg 2@ s" build"   COMPARE 0= IF fhdl.build   EXIT THEN
-
-    \ Ошибка
-    s" Unknown command." type cr fhdl.help
+    cmd-arg 2@ fhdl.dispatch-command
 ;
 
 fhdl bye

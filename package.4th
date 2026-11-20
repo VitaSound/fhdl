@@ -1,6 +1,6 @@
 forth-package
     key-value name fhdl
-    key-value version 0.1.0
+    key-value version 0.1.1
     key-value license COPL
     key-value description fhdl
     key-value main fhdl.4th

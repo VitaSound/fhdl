@@ -1,5 +1,6 @@
 # FHDL (Forth HDL)
 
+[![Ver](https://img.shields.io/badge/Ver-0.1.1-green.svg)](https://github.com/VitaSound/fhdl/releases/tag/0.1.1)
 [![Cov](https://img.shields.io/badge/Cov-76%25-green.svg)](https://github.com/VitaSound/fhdl)
 
 > **Archive.** Development moved to [fhdlgen](https://github.com/VitaSound/fhdlgen).
